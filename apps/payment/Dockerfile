@@ -10,6 +10,6 @@ RUN npm i -g pnpm
 
 RUN pnpm i
 
-COPY . .
+COPY ../order .
 
-CMD ["pnpm","run","start:dev","order"]
+CMD ["pnpm","run","start:dev","payment"]

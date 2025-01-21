@@ -39,14 +39,14 @@
    order:
      build:
        context: .
-       dockerfile: ./apps/order/Dockerfile
+       dockerfile: apps/payment/Dockerfile
        target: development
      command: [ "pnpm", "run", "start:dev", "order" ]
      depends_on:
        mongo_order:
          condition: service_healthy
      env_file:
-       - ./apps/order/.env
+       - apps/payment/.env
      ports:
        - "3003:3000"
      volumes:
