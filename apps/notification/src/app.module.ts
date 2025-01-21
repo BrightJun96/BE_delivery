@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { MongooseModule } from '@nestjs/mongoose';
 import * as Joi from 'joi';
 
 import { NotificationModule } from './notification/notification.module';
@@ -14,12 +14,9 @@ import { NotificationModule } from './notification/notification.module';
         DB_URL: Joi.string().required(),
       }),
     }),
-    TypeOrmModule.forRootAsync({
+    MongooseModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        url: configService.getOrThrow('DB_URL'),
-        autoLoadEntities: true,
-        synchronize: true,
+        uri: configService.getOrThrow('DB_URL'),
       }),
       inject: [ConfigService],
     }),
