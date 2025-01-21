@@ -1,11 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
 import { Customer, CustomerSchema } from './customer.entity';
 import {
   DeliveryAddress,
   DeliveryAddressSchema,
 } from './delivery-address.entity';
 import { Payment, PaymentSchema } from './payment.entity';
-import { Product, ProductSchema } from './product.entity';
+import { Product } from './product.entity';
 
 export enum OrderStatus {
   pending = 'Pending',
@@ -25,7 +26,7 @@ export class Order extends Document {
   customer: Customer;
 
   @Prop({
-    type: ProductSchema,
+    type: [],
 
     required: true,
   })
