@@ -25,11 +25,15 @@ export class OrderService {
   }
 
   async getUserFromToken(token: string) {
-    const response = await lastValueFrom(
-      this.userService.send({ cmd: 'parse_bearer_token' }, { token }),
-    );
+    try {
+      const response = await lastValueFrom(
+        this.userService.send({ cmd: 'parse_bearer_token' }, { token }),
+      );
 
-    console.log('----------------------- ');
-    console.log('response : ', response);
+      console.log('----------------------- ');
+      console.log('response : ', response);
+    } catch (e) {
+      console.error(e);
+    }
   }
 }

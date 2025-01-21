@@ -19,13 +19,13 @@ export class Payment {
   paymentMethod: PaymentMethod;
 
   @Prop({
-    require: true,
+    required: true,
   })
   // 결제 수단 이름 (--법인카드)
   paymentName: string;
 
   @Prop({
-    require: true,
+    required: true,
   })
   amount: number;
 }

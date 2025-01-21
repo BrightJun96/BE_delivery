@@ -4,9 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { MongooseModule } from '@nestjs/mongoose';
 import * as Joi from 'joi';
-import { OrderController } from './order/order.controller';
 import { OrderModule } from './order/order.module';
-import { OrderService } from './order/order.service';
 
 @Module({
   imports: [
@@ -43,7 +41,5 @@ import { OrderService } from './order/order.service';
     }),
     OrderModule,
   ],
-  controllers: [OrderController],
-  providers: [OrderService],
 })
 export class AppModule {}
