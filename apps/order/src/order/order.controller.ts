@@ -8,7 +8,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { EventPattern, Payload } from '@nestjs/microservices';
-import { Authorization } from '../../../user/src/auth/decorator/authorization.decorator';
+import { Authorization } from '../../../gateway/src/auth/decorator/authorization.decorator';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { DeliveryStartedDto } from './dto/delivery-started.dto';
 import { OrderStatus } from './entities/order.entity';

@@ -3,10 +3,6 @@ import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 export class RegisterUserDto {
   @IsString()
   @IsNotEmpty()
-  token: string;
-
-  @IsString()
-  @IsNotEmpty()
   name: string;
 
   @IsNumber()
