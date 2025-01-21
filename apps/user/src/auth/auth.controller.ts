@@ -6,8 +6,10 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 import { AuthService } from './auth.service';
 import { Authorization } from './decorator/authorization.decorator';
+import { ParseBearerToken } from './dto/parse-bearer-token.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 
 @Controller('auth')
@@ -34,5 +36,13 @@ export class AuthController {
     }
 
     return await this.authService.login(token);
+  }
+
+  @MessagePattern({
+    cmd: 'parse_bearer_token',
+  })
+  @UsePipes(ValidationPipe)
+  parseBearerToken(@Payload() parseBearerToken: ParseBearerToken) {
+    return this.authService.parseBearerToken(parseBearerToken.token, false);
   }
 }
