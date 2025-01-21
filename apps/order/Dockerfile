@@ -12,4 +12,4 @@ RUN pnpm i
 
 COPY . .
 
-CMD ["pnpm","run","start:dev","payment"]
+CMD ["pnpm","run","start:dev","order"]

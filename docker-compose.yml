@@ -39,20 +39,36 @@
    order:
      build:
        context: .
-       dockerfile: apps/payment/Dockerfile
+       dockerfile: ./apps/order/Dockerfile
        target: development
      command: [ "pnpm", "run", "start:dev", "order" ]
      depends_on:
        mongo_order:
          condition: service_healthy
      env_file:
-       - apps/payment/.env
+       - ./apps/order/.env
      ports:
        - "3003:3000"
      volumes:
        - .:/usr/src/app
        - /usr/src/app/node_modules
 
+   payment:
+     build:
+       context: .
+       dockerfile: ./apps/payment/Dockerfile
+       target: development
+     command: [ "pnpm", "run", "start:dev", "payment" ]
+     depends_on:
+       postgres_payment:
+         condition: service_healthy
+     env_file:
+       - ./apps/payment/.env
+     ports:
+       - "3004:3000"
+     volumes:
+       - .:/usr/src/app
+       - /usr/src/app/node_modules
    #DB
    postgres_user:
      image: postgres:16
@@ -105,4 +121,19 @@
        retries: 10
        start_period: 5s
 
-
+   postgres_payment:
+     image: postgres:16
+     environment:
+       POSTGRES_USER: postgres
+       POSTGRES_PASSWORD: postgres
+       POSTGRES_DB: postgres
+     ports:
+       - "6004:5432"
+     volumes:
+       - ./postgres/payment:/var/lib/postgresql/data
+     healthcheck:
+       test: [ "CMD-SHELL","pg_isready -U postgres" ]
+       interval: 5s
+       timeout: 5s
+       retries: 10
+       start_period: 5s
