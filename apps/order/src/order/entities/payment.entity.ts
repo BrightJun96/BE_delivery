@@ -1,4 +1,4 @@
-import { Prop, Schema } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 export enum PaymentMethod {
   creditCard = 'CreditCard',
@@ -8,7 +8,7 @@ export enum PaymentMethod {
 @Schema({
   _id: false,
 })
-export class Payment extends Document {
+export class Payment {
   @Prop()
   paymentId: string;
 
@@ -29,3 +29,5 @@ export class Payment extends Document {
   })
   amount: number;
 }
+
+export const PaymentSchema = SchemaFactory.createForClass(Payment);
