@@ -16,28 +16,6 @@ import { RegisterUserDto } from './dto/register-user.dto';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  // @Post('register')
-  // async registerUser(
-  //   @Authorization() token: string,
-  //   @Body() registerUserDto: RegisterUserDto,
-  // ) {
-  //   if (token === null) {
-  //     throw new UnauthorizedException('토큰을 입력해주세요.');
-  //   }
-  //
-  //   return await this.authService.register(token, registerUserDto);
-  // }
-  //
-  // @Post('login')
-  // @UsePipes(ValidationPipe)
-  // async login(@Authorization() token: string) {
-  //   if (token === null) {
-  //     throw new UnauthorizedException('토큰을 입력해주세요.');
-  //   }
-  //
-  //   return await this.authService.login(token);
-  // }
-  //
   @MessagePattern({
     cmd: 'parse_bearer_token',
   })
