@@ -69,6 +69,23 @@
      volumes:
        - .:/usr/src/app
        - /usr/src/app/node_modules
+
+   notification:
+     build:
+       context: .
+       dockerfile: ./apps/notification/Dockerfile
+       target: development
+     command: [ "pnpm", "run", "start:dev", "notification" ]
+     depends_on:
+       postgres_payment:
+         condition: service_healthy
+     env_file:
+       - ./apps/notification/.env
+     ports:
+       - "3005:3000"
+     volumes:
+       - .:/usr/src/app
+       - /usr/src/app/node_modules
    #DB
    postgres_user:
      image: postgres:16
@@ -131,6 +148,23 @@
        - "6004:5432"
      volumes:
        - ./postgres/payment:/var/lib/postgresql/data
+     healthcheck:
+       test: [ "CMD-SHELL","pg_isready -U postgres" ]
+       interval: 5s
+       timeout: 5s
+       retries: 10
+       start_period: 5s
+
+   postgres_notification:
+     image: postgres:16
+     environment:
+       POSTGRES_USER: postgres
+       POSTGRES_PASSWORD: postgres
+       POSTGRES_DB: postgres
+     ports:
+       - "6005:5432"
+     volumes:
+       - ./postgres/notification:/var/lib/postgresql/data
      healthcheck:
        test: [ "CMD-SHELL","pg_isready -U postgres" ]
        interval: 5s
