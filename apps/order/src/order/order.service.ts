@@ -58,6 +58,12 @@ export class OrderService {
     return this.orderModel.findById(order._id);
   }
 
+  async changeOrderStatus(orderId: string, status: OrderStatus) {
+    return this.orderModel.findByIdAndUpdate(orderId, {
+      status,
+    });
+  }
+
   private async processPayment(
     orderId: string,
     payment: PaymentDto,
@@ -112,6 +118,8 @@ export class OrderService {
     return products.reduce((acc, next) => acc + next.price, 0);
   }
 
+  // User SERVICE User entity => Order SERVICE Customer entity
+
   private async getProductsInfo(productIds: string[]): Promise<Product[]> {
     const productsResponse = await lastValueFrom(
       this.productService.send(
@@ -135,8 +143,6 @@ export class OrderService {
       price: p.price,
     }));
   }
-
-  // User SERVICE User entity => Order SERVICE Customer entity
 
   private async getUserFromToken(token: string) {
     const tokenResponse = await lastValueFrom(

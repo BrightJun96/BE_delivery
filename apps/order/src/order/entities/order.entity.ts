@@ -13,7 +13,7 @@ export enum OrderStatus {
   paymentCancelled = 'PaymentCancelled',
   paymentFailed = 'PaymentFailed',
   paymentProcessed = 'PaymentProcessed',
-  paymentStarted = 'DeliveryStarted',
+  deliveryStarted = 'DeliveryStarted',
   paymentDone = 'PaymentDone',
 }
 
