@@ -5,6 +5,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { MongooseModule } from '@nestjs/mongoose';
 import * as Joi from 'joi';
 import { OrderModule } from './order/order.module';
+import { GatewayModule } from './gateway/gateway.module';
 
 @Module({
   imports: [
@@ -69,6 +70,7 @@ import { OrderModule } from './order/order.module';
       isGlobal: true,
     }),
     OrderModule,
+    GatewayModule,
   ],
 })
 export class AppModule {}
