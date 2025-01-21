@@ -1,4 +1,4 @@
-import { PRODUCT_SERVICE, USER_SERVICE } from '@app/common';
+import { PAYMENT_SERVICE, PRODUCT_SERVICE, USER_SERVICE } from '@app/common';
 import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/mongoose';
@@ -8,9 +8,10 @@ import { AddressDto } from './dto/address.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { PaymentDto } from './dto/payment.dto';
 import { Customer } from './entities/customer.entity';
-import { Order } from './entities/order.entity';
+import { Order, OrderStatus } from './entities/order.entity';
 import { Product } from './entities/product.entity';
 import { PaymentCancelledException } from './exception/payment-cancelled.exception';
+import { PaymentFailedException } from './exception/payment-failed.exception';
 
 @Injectable()
 export class OrderService {
@@ -19,6 +20,8 @@ export class OrderService {
     private readonly userService: ClientProxy,
     @Inject(PRODUCT_SERVICE)
     private readonly productService: ClientProxy,
+    @Inject(PAYMENT_SERVICE)
+    private readonly paymentService: ClientProxy,
     @InjectModel(Order.name)
     private readonly orderModel: Model<Order>,
   ) {}
@@ -48,8 +51,55 @@ export class OrderService {
       payment,
     );
     // 6. 결제 시도
-    // 7. 주문 상태 업데이트
-    // 8. 결과 반환
+
+    await this.processPayment(order._id.toString(), payment, user.email);
+
+    // 7. 결과 반환
+    return this.orderModel.findById(order._id);
+  }
+
+  private async processPayment(
+    orderId: string,
+    payment: PaymentDto,
+    userEmail: string,
+  ) {
+    try {
+      const paymentResponse = await lastValueFrom(
+        this.paymentService.send(
+          { cmd: 'make_payment' },
+          { ...payment, userEmail, orderId },
+        ),
+      );
+
+      console.log('paymentResponse:', paymentResponse);
+      if (paymentResponse.status === 'error') {
+        throw new PaymentFailedException(paymentResponse);
+      }
+
+      const isPaid = paymentResponse.data.paymentStatus === 'Approved';
+
+      const orderStatus = isPaid
+        ? OrderStatus.paymentProcessed
+        : OrderStatus.paymentFailed;
+
+      console.log('orderStatus:', orderStatus);
+      if (orderStatus === OrderStatus.paymentFailed) {
+        throw new PaymentFailedException(paymentResponse.error);
+      }
+
+      await this.orderModel.findByIdAndUpdate(orderId, {
+        status: OrderStatus.paymentProcessed,
+      });
+
+      return paymentResponse;
+    } catch (e) {
+      if (e instanceof PaymentFailedException) {
+        await this.orderModel.findByIdAndUpdate(orderId, {
+          status: OrderStatus.paymentFailed,
+        });
+      }
+      throw e;
+    }
   }
 
   private validatePaymentAmount(clientAmount: number, serverAmount: number) {
@@ -86,6 +136,8 @@ export class OrderService {
     }));
   }
 
+  // User SERVICE User entity => Order SERVICE Customer entity
+
   private async getUserFromToken(token: string) {
     const tokenResponse = await lastValueFrom(
       this.userService.send({ cmd: 'parse_bearer_token' }, { token }),
@@ -107,8 +159,6 @@ export class OrderService {
 
     return userResponse.data;
   }
-
-  // User SERVICE User entity => Order SERVICE Customer entity
 
   private createCustomer({
     id,

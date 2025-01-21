@@ -6,7 +6,7 @@ export enum PaymentStatus {
   approved = 'Approved',
 }
 
-enum PaymentMethod {
+export enum PaymentMethod {
   creditCard = 'CreditCard',
   kakao = 'Kakao',
 }
