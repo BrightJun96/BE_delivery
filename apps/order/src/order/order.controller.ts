@@ -1,35 +1,28 @@
-import { RpcInterceptor } from '@app/common';
-import {
-  Controller,
-  UseInterceptors,
-  UsePipes,
-  ValidationPipe,
-} from '@nestjs/common';
-import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
-import { CreateOrderDto } from './dto/create-order.dto';
-import { DeliveryStartedDto } from './dto/delivery-started.dto';
+import { OrderMicroservice } from '@app/common';
+import { Controller } from '@nestjs/common';
 import { OrderStatus } from './entities/order.entity';
+import { PaymentMethod } from './entities/payment.entity';
 import { OrderService } from './order.service';
 
 @Controller('order')
-export class OrderController {
+export class OrderController
+  implements OrderMicroservice.OrderServiceController
+{
   constructor(private readonly orderService: OrderService) {}
 
-  @MessagePattern({
-    cmd: 'create_order_api',
-  })
-  @UsePipes(ValidationPipe)
-  @UseInterceptors(RpcInterceptor)
-  async createOrder(@Payload() createOrderDto: CreateOrderDto) {
-    return await this.orderService.createOrder(createOrderDto);
+  async createOrder(createOrderDto: OrderMicroservice.CreateOrderRequest) {
+    return await this.orderService.createOrder({
+      ...createOrderDto,
+      payment: {
+        ...createOrderDto.payment,
+        paymentMethod: createOrderDto.payment.paymentMethod as PaymentMethod,
+      },
+    });
   }
 
-  @EventPattern({
-    cmd: 'delivery_started',
-  })
-  @UsePipes(ValidationPipe)
-  @UseInterceptors(RpcInterceptor)
-  async deliveryStarted(@Payload() deliveryStartedDto: DeliveryStartedDto) {
+  async deliveryStarted(
+    deliveryStartedDto: OrderMicroservice.DeliveryStartedRequest,
+  ) {
     return await this.orderService.changeOrderStatus(
       deliveryStartedDto.id,
       OrderStatus.deliveryStarted,

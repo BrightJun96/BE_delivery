@@ -52,6 +52,8 @@ export class ProductService {
       },
     ];
 
-    return await this.productRepository.save(data);
+    await this.productRepository.save(data);
+
+    return true;
   }
 }
