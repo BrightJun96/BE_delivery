@@ -3,6 +3,7 @@ import { Controller } from '@nestjs/common';
 import { ProductService } from './product.service';
 
 @Controller('product')
+@ProductMicroservice.ProductServiceControllerMethods()
 export class ProductController
   implements ProductMicroservice.ProductServiceController
 {

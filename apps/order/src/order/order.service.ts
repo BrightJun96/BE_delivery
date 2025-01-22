@@ -1,6 +1,13 @@
-import { PAYMENT_SERVICE, PRODUCT_SERVICE, USER_SERVICE } from '@app/common';
-import { Inject, Injectable } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import {
+  PAYMENT_SERVICE,
+  PaymentMicroservice,
+  PRODUCT_SERVICE,
+  ProductMicroservice,
+  USER_SERVICE,
+  UserMicroservice,
+} from '@app/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { ClientGrpc } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { lastValueFrom } from 'rxjs';
@@ -14,18 +21,37 @@ import { PaymentCancelledException } from './exception/payment-cancelled.excepti
 import { PaymentFailedException } from './exception/payment-failed.exception';
 
 @Injectable()
-export class OrderService {
+export class OrderService implements OnModuleInit {
+  userService: UserMicroservice.UserServiceClient;
+  productService: ProductMicroservice.ProductServiceClient;
+  paymentService: PaymentMicroservice.PaymentServiceClient;
   constructor(
     @Inject(USER_SERVICE)
-    private readonly userService: ClientProxy,
+    private readonly userMicroservice: ClientGrpc,
     @Inject(PRODUCT_SERVICE)
-    private readonly productService: ClientProxy,
+    private readonly productMicroservice: ClientGrpc,
     @Inject(PAYMENT_SERVICE)
-    private readonly paymentService: ClientProxy,
+    private readonly paymentMicroservice: ClientGrpc,
     @InjectModel(Order.name)
     private readonly orderModel: Model<Order>,
   ) {}
 
+  onModuleInit() {
+    this.userService =
+      this.userMicroservice.getService<UserMicroservice.UserServiceClient>(
+        'UserService',
+      );
+
+    this.productService =
+      this.productMicroservice.getService<ProductMicroservice.ProductServiceClient>(
+        'ProductService',
+      );
+
+    this.paymentService =
+      this.paymentMicroservice.getService<PaymentMicroservice.PaymentServiceClient>(
+        'PaymentService',
+      );
+  }
   async createOrder({ productIds, payment, address, meta }: CreateOrderDto) {
     // 1. 사용자 정보 가져오기
 
@@ -68,26 +94,17 @@ export class OrderService {
   ) {
     try {
       const paymentResponse = await lastValueFrom(
-        this.paymentService.send(
-          { cmd: 'make_payment' },
-          { ...payment, userEmail, orderId },
-        ),
+        this.paymentService.makePayment({ ...payment, userEmail, orderId }),
       );
 
-      console.log('paymentResponse:', paymentResponse);
-      if (paymentResponse.status === 'error') {
-        throw new PaymentFailedException(paymentResponse);
-      }
-
-      const isPaid = paymentResponse.data.paymentStatus === 'Approved';
+      const isPaid = paymentResponse.paymentStatus === 'Approved';
 
       const orderStatus = isPaid
         ? OrderStatus.paymentProcessed
         : OrderStatus.paymentFailed;
 
-      console.log('orderStatus:', orderStatus);
       if (orderStatus === OrderStatus.paymentFailed) {
-        throw new PaymentFailedException(paymentResponse.error);
+        throw new PaymentFailedException(paymentResponse);
       }
 
       await this.orderModel.findByIdAndUpdate(orderId, {
@@ -119,22 +136,13 @@ export class OrderService {
 
   private async getProductsInfo(productIds: string[]): Promise<Product[]> {
     const productsResponse = await lastValueFrom(
-      this.productService.send(
-        {
-          cmd: 'get_products_info',
-        },
-        {
-          productIds,
-        },
-      ),
+      this.productService.getProductsInfo({
+        productIds,
+      }),
     );
 
-    if (productsResponse === 'error') {
-      throw new PaymentCancelledException(productsResponse);
-    }
-
     // Product SERVICE Product entity => Order SERVICE Product entity
-    return productsResponse.data.map((p) => ({
+    return productsResponse.products.map((p) => ({
       productId: p.id,
       name: p.name,
       price: p.price,
@@ -143,14 +151,10 @@ export class OrderService {
 
   private async getUserFromToken(userId: string) {
     const userResponse = await lastValueFrom(
-      this.userService.send({ cmd: 'get_user_info' }, { userId }),
+      this.userService.getUserInfo({ userId }),
     );
 
-    if (userResponse === 'error') {
-      throw new PaymentCancelledException(userResponse);
-    }
-
-    return userResponse.data;
+    return userResponse;
   }
 
   private createCustomer({

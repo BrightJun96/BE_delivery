@@ -3,6 +3,7 @@ import { Controller, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
 @Controller('auth')
+@UserMicroservice.AuthServiceControllerMethods()
 export class AuthController implements UserMicroservice.AuthServiceController {
   constructor(private readonly authService: AuthService) {}
 
