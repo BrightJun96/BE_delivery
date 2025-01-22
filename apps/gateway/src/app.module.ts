@@ -23,7 +23,6 @@ import { ProductModule } from './product/product.module';
     }),
     ClientsModule.registerAsync({
       clients: [
-        // ORDER_SERVICE
         {
           name: ORDER_SERVICE,
           useFactory: (configService: ConfigService) => ({

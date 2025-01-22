@@ -26,13 +26,10 @@ export class OrderService {
     private readonly orderModel: Model<Order>,
   ) {}
 
-  async createOrder(
-    { productIds, payment, address }: CreateOrderDto,
-    token: string,
-  ) {
+  async createOrder({ productIds, payment, address, meta }: CreateOrderDto) {
     // 1. 사용자 정보 가져오기
 
-    const user = await this.getUserFromToken(token);
+    const user = await this.getUserFromToken(meta.user.sub);
 
     // 2. 상품 정보 가져오기
 
@@ -144,17 +141,7 @@ export class OrderService {
     }));
   }
 
-  private async getUserFromToken(token: string) {
-    const tokenResponse = await lastValueFrom(
-      this.userService.send({ cmd: 'parse_bearer_token' }, { token }),
-    );
-
-    if (tokenResponse.status === 'error') {
-      throw new PaymentCancelledException(tokenResponse);
-    }
-
-    const userId = tokenResponse.data.sub;
-
+  private async getUserFromToken(userId: string) {
     const userResponse = await lastValueFrom(
       this.userService.send({ cmd: 'get_user_info' }, { userId }),
     );
