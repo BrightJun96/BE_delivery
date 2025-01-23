@@ -1,34 +1,17 @@
-import { RpcInterceptor } from '@app/common';
-import {
-  Controller,
-  UnauthorizedException,
-  UseInterceptors,
-  UsePipes,
-  ValidationPipe,
-} from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
-import { LoginDto } from '../../../gateway/src/auth/dto/login.dto';
+import { UserMicroservice } from '@app/common';
+import { Controller, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { ParseBearerToken } from './dto/parse-bearer-token.dto';
-import { RegisterUserDto } from './dto/register-user.dto';
 
 @Controller('auth')
-export class AuthController {
+@UserMicroservice.AuthServiceControllerMethods()
+export class AuthController implements UserMicroservice.AuthServiceController {
   constructor(private readonly authService: AuthService) {}
 
-  @MessagePattern({
-    cmd: 'parse_bearer_token',
-  })
-  @UsePipes(ValidationPipe)
-  @UseInterceptors(RpcInterceptor)
-  parseBearerToken(@Payload() parseBearerToken: ParseBearerToken) {
+  parseBearerToken(parseBearerToken: UserMicroservice.ParseBearerTokenRequest) {
     return this.authService.parseBearerToken(parseBearerToken.token, false);
   }
 
-  @MessagePattern({
-    cmd: 'register',
-  })
-  async registerUser(@Payload() registerUserDto: RegisterUserDto) {
+  async registerUser(registerUserDto: UserMicroservice.RegisterUserRequest) {
     if (registerUserDto.token === null) {
       throw new UnauthorizedException('토큰을 입력해주세요.');
     }
@@ -39,10 +22,7 @@ export class AuthController {
     );
   }
 
-  @MessagePattern({
-    cmd: 'login',
-  })
-  async login(@Payload() { token }: LoginDto) {
+  async loginUser({ token }: UserMicroservice.LoginUserRequest) {
     if (token === null) {
       throw new UnauthorizedException('토큰을 입력해주세요.');
     }

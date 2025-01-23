@@ -1,40 +1,38 @@
-import { USER_SERVICE } from '@app/common';
-import { Inject, Injectable } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import { USER_SERVICE, UserMicroservice } from '@app/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { ClientGrpc } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
 import { RegisterUserDto } from './dto/register-user.dto';
 
 @Injectable()
-export class AuthService {
+export class AuthService implements OnModuleInit {
+  authService: UserMicroservice.AuthServiceClient;
+
   constructor(
     @Inject(USER_SERVICE)
-    private readonly userMicroService: ClientProxy,
+    private readonly userMicroService: ClientGrpc,
   ) {}
 
+  onModuleInit() {
+    this.authService =
+      this.userMicroService.getService<UserMicroservice.AuthServiceClient>(
+        'AuthService',
+      );
+  }
   register(token: string, registerUserDto: RegisterUserDto) {
     return lastValueFrom(
-      this.userMicroService.send(
-        {
-          cmd: 'register',
-        },
-        {
-          ...registerUserDto,
-          token,
-        },
-      ),
+      this.authService.registerUser({
+        ...registerUserDto,
+        token,
+      }),
     );
   }
 
   login(token: string) {
     return lastValueFrom(
-      this.userMicroService.send(
-        {
-          cmd: 'login',
-        },
-        {
-          token,
-        },
-      ),
+      this.authService.loginUser({
+        token,
+      }),
     );
   }
 }
